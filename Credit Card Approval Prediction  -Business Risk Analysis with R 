@@ -1,0 +1,915 @@
+####################Project -credit card application############################
+setwd("C:/Users/JIE WU/Desktop/BUAN.6356Business Analytics With R - F22/Project/Dataset-Credit Card Application")
+getwd
+application <- read.csv("application_record.csv", header = TRUE)
+credit<-read.csv("credit_record.csv", header = TRUE)
+
+############################explore tables#####################################
+#############1-explore and update table-application##################
+
+application$CODE_GENDERlabel<- factor(application$CODE_GENDER,
+                                      levels=c("M","F"),
+                                      labels=c("0", 
+                                               "1"))
+
+application$FLAG_OWN_CARlabel<- factor(application$FLAG_OWN_CAR,
+                                       levels=c("Y","N"),
+                                       labels=c("1", 
+                                                "0"))
+
+
+application$FLAG_OWN_REALTYlabel<- factor(application$FLAG_OWN_REALTY,
+                                          levels=c("Y","N"),
+                                          labels=c("1", 
+                                                   "0"))
+
+
+application$NAME_EDUCATION_TYPElabel<- factor(application$NAME_EDUCATION_TYPE,
+                                              levels=c("Lower secondary","Secondary / secondary special",
+                                                       "Incomplete higher"," Higher education","Academic degree"),
+                                              labels=c("1", 
+                                                       "2",
+                                                       "3",
+                                                       "4",
+                                                       "5"))
+application$NAME_EDUCATION_TYPElabel<- factor(application$NAME_EDUCATION_TYPE,
+                                              levels=c("Married","Single / not married ",
+                                                       "Civil marriage"," Separated","Widow"),
+                                              labels=c("1", 
+                                                       "2",
+                                                       "3",
+                                                       "4",
+                                                       "5"))
+
+
+application$YEARS_BIRTH <- -application$DAYS_BIRTH/365
+application$YEARS_EMPLOYED <- -application$DAYS_EMPLOYED/365
+
+#Display working status categories
+levels(application$CODE_GENDERlabel)
+levels(application$FLAG_OWN_CARlabel)
+
+
+#find the dimension of data frame-application
+dim(application)
+# show the first six rows
+head(application)  
+# show all the data in a new tab
+View(application)  
+# List Columns 
+colnames(application)
+# List values for particual Columns
+head(application$ID) 
+# Number of Rows 
+nrow(application)
+# Number of Columns
+ncol(application)
+# Dimension
+dim(application)
+head(application)
+
+##another way  to present the structure -table##########
+data<-application
+options(scipen=999)
+str(data)
+table(data$CODE_GENDER)
+table(data$FLAG_OWN_CAR)
+table(data$FLAG_OWN_REALTY)
+table(data$NAME_INCOME_TYPE)
+table(data$NAME_EDUCATION_TYPE)
+table(data$NAME_FAMILY_STATUS)
+table(data$NAME_HOUSING_TYPE)
+table(data$FLAG_MOBIL)
+table(data$FLAG_WORK_PHONE)
+table(data$FLAG_PHONE)
+table(data$FLAG_EMAIL)
+table(data$OCCUPATION_TYPE)
+
+sapply(data,class)
+
+#######################2-explore and update table- credit#######################
+#find the dimension of data frame-credit#
+dim(credit)
+# show the first six rows
+head(credit)  
+# show all the data in a new tab
+View(credit)  
+# List Columns 
+colnames(credit)
+# List values for particual Columns
+head(credit$ID) 
+# Number of Rows 
+nrow(credit)
+# Number of Columns
+ncol(credit)
+# Dimension
+dim(credit)
+head(credit)
+
+
+########################3-merge table and solve unbalance problem###############
+#simple merger
+m<-merge(application,credit,by.x="ID",by.y = "ID",all = TRUE)
+
+
+#update table-credit
+credit$STATUSlabel<- factor(credit$STATUS,
+                            levels=c("X","C","0","1","2","3","4","5"),
+                            labels=c("0", 
+                                     "1",
+                                     "2",
+                                     "3",
+                                     "4",
+                                     "5",
+                                     "6",
+                                     "7"))
+
+#slove the unbalance probelm
+df1<-cbind(credit$ID,credit$STATUSlabel)
+group_count <- aggregate(credit$ID, by = list(credit$ID), FUN = length)
+group_count
+
+group_mean<-aggregate(cbind(credit$ID,credit$STATUSlabel),list(credit$ID),FUN= mean)
+group_mean
+
+credit2<-cbind(group_count,group_mean$V2)
+credit2
+
+colnames(credit2) <- c('ID','Months_Balance','Status')
+
+
+#visualization
+plot(credit2$ID,credit2$Status,
+     main="Scatter Plot of ID and Status",
+     ylab="Status",
+     xlab="ID",
+     col="blue",
+     pch=16, 
+     cex=1.2, cex.lab=1.2, cex.axis=1.2,
+)
+
+
+install.packages("ggplot2")
+library(ggplot2)
+
+ggplot(data=credit2, aes(x=ID, y=Status))+
+  geom_line()
+
+
+#set rules
+credit2$`rank`[credit2$`Status` < 2] <- 0
+credit2$`rank`[credit2$`Status` >= 2] <- 1
+
+
+#merge data#
+m2<-merge(application,credit2,by.x="ID",by.y = "ID",all = TRUE)
+m2 <- m2[!is.na(m2$CODE_GENDER), ]
+m2 <- m2[!is.na(m2$rank), ]
+m2 <- m2[m2$OCCUPATION_TYPE != "", ]
+m2 <- subset(m2, select = -c(NAME_EDUCATION_TYPElabel))
+
+
+##explore merged data
+# find the dimension of data frame
+dim(m2) 
+# show the first six rows
+head(m2)  
+# show all the data in a new tab
+View(m2)  
+# List Columns 
+colnames(m2)
+# List values for particualr Columns
+head(m2$ID) 
+# Number of Rows 
+nrow(m2)
+# Number of Columns
+ncol(m2)
+# Dimension
+dim(m2)
+head(m2) 
+## Subsetting 
+m2$ID[c(1,2,3)]
+m2$ID[1:3]
+head(m2$ID)
+
+# VIEWING  
+# show the first 10 rows of the first column only
+m2[1:10, 1]  
+# show the first 10 rows of each of the columns 
+m2[1:10, ] 
+# show the fifth row of the first 10 columns
+m2[5, 1:10]  
+# show the fifth row of some columns
+m2[5, c(1:2, 4, 8:10)]
+# show the whole first column
+m2[, 1]  
+# a different way to show the whole specifical column
+m2$ID  
+# show the first 10 rows of the specifical column
+m2$ID[1:10] 
+# find the length of the specifical column
+length(m2$ID) 
+# find the mean of the first column
+mean(m2$ID)  
+# find summary statistics for each column
+summary(m2)  
+
+
+
+#############################MISSING DATA#######################################
+#############
+# R-library
+install.packages("pacman")
+library(pacman)
+p_load(tidyverse) 
+p_load(mice)
+p_load(VIM)
+
+# overview
+m2 %>% glimpse()
+
+# verify missing value
+is.na(m2)
+# total overview
+sum(is.na(m2))
+mean(is.na(m2))
+
+# function-missing value
+var_na_ratio <- function(x){
+  return(mean(is.na(x)))
+}
+
+apply(m2, 2, var_na_ratio)
+
+apply(m2, 1, var_na_ratio)
+
+# visualization of missing value
+md.pattern(m2)
+aggr_plot <- aggr(m2, 
+                  col=c('navyblue','red'), 
+                  numbers=TRUE, 
+                  sortVars=TRUE, 
+                  labels=names(data), 
+                  cex.axis=.7, 
+                  gap=3, 
+                  ylab=c("bar chart of missing value","missing patern"))
+
+# 
+data <- m2
+data[4:10,3] <- rep(NA,7)
+data[1:5,4] <- NA
+
+data <- data[-c(5,6)]
+summary(data)
+
+pMiss <- function(x){sum(is.na(x))/length(x)*100}
+apply(data,2,pMiss)
+apply(data,1,pMiss)
+
+
+################################outlier#########################################
+sum(complete.cases(m2))         #is.na(m)  
+sum(!complete.cases(m2))  
+mean(!complete.cases(m2))  #Missing Value Proportion  
+m2[!complete.cases(m2),]  #Filter out values with missing values 
+
+boxplot(m2$AMT_INCOME_TOTAL,boxwex=0.6)  
+
+
+#########################data visualization and EDA############################
+
+install.packages("dplyr") 
+library("dplyr")
+
+
+Freq<- application %>%
+  group_by(CODE_GENDER) %>%  
+  summarise(Frequency=n()) %>%
+  arrange(desc(Frequency)); Freq
+
+
+Freq<- application %>%
+  group_by(FLAG_OWN_CAR) %>%  
+  summarise(Frequency=n()) %>%
+  arrange(desc(Frequency)); Freq
+
+
+Freq<- application %>%
+  group_by(application$NAME_EDUCATION_TYPE) %>%  
+  summarise(Frequency=n()) %>%
+  arrange(desc(Frequency)); Freq
+
+Freq<- application %>%
+  group_by(application$NAME_FAMILY_STATUS) %>%  
+  summarise(Frequency=n()) %>%
+  arrange(desc(Frequency)); Freq     
+
+
+Freq<- application %>%
+  group_by(application$CNT_CHILDREN) %>%  
+  summarise(Frequency=n()) %>%
+  arrange(desc(Frequency)); Freq  
+
+
+Freq<- application %>%
+  group_by(application$CNT_FAM_MEMBERS) %>%  
+  summarise(Frequency=n()) %>%
+  arrange(desc(Frequency)); Freq    
+
+
+Freq<- application %>%
+  group_by(application$OCCUPATION_TYPE) %>%  
+  summarise(Frequency=n()) %>%
+  arrange(desc(Frequency)); Freq 
+
+
+Freq<- application %>%
+  group_by(application$NAME_HOUSING_TYPE) %>%  
+  summarise(Frequency=n()) %>%
+  arrange(desc(Frequency)); Freq
+
+
+################################pie chart#######################################
+car <- table(application$FLAG_OWN_CAR)
+pie(car,
+    col = hcl.colors(length(car), "BluYl"))
+title(main = "Car ownership", sub = "Breakage of car ownership in our dataset",
+      xlab = "X axis", ylab = "Y axis",
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="blue"
+)
+
+#work phone
+work <- table(application$FLAG_WORK_PHONE)
+pie(work,
+    col = hcl.colors(length(work), "BluYl"))
+title(main = "Work phone ownership", sub = "Breakage of work phone ownership in our dataset",
+      
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue"
+)
+
+## phone ownership
+phone <- table(application$FLAG_PHONE)
+pie(phone,
+    col = hcl.colors(length(phone), "BluYl"))
+title(main = "General phone ownership", sub = "Breakage of phone ownership in our dataset",
+      xlab = "X axis", ylab = "Y axis",
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue"
+)
+
+## email 
+email <- table(application$FLAG_EMAIL)
+pie(email,
+    col = hcl.colors(length(email), "BluYl"))
+title(main = "Email availability", sub = "Breakage of email availability  in our dataset",
+      xlab = "X axis", ylab = "Y axis",
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue")
+
+
+
+################Creating histogram-Age and income distribution################
+
+install.packages("tidyverse")
+library(tidyverse)
+df<-application %>%
+  select(ID,CODE_GENDER,DAYS_BIRTH,DAYS_EMPLOYED) %>%
+  mutate(Age= -(DAYS_BIRTH /365),work_experience= -(DAYS_EMPLOYED/ 360))
+df
+
+
+hist(df$Age, 
+     breaks=10,  #Define different Number of Breaks. 
+     freq=T, #freq=F -->hist of rel freq, comment out ylim, ylab, and labels.
+     main="Histogram of Age of applicant",
+     xlab="Age",
+     ylab="Frequency",
+     labels=T, #label the values
+     xlim=c(20,70),
+     ylim=c(0,70000),
+     col="grey",
+     border="red", 
+     cex=1.2, cex.lab=1.2, cex.axis=1.2,
+     las=1, #rotate the value of y-axis
+     #las=2, #rotate the value of x-axis
+)
+
+
+hist(application$AMT_INCOME_TOTAL, 
+     breaks=10000,  #Define different Number of Breaks. 
+     freq=T, #freq=F -->hist of rel freq, comment out ylim, ylab, and labels.
+     main="Histogram of Total Income of applicant",
+     xlab="Income",
+     ylab="Frequency",
+     labels=T, #label the values
+     xlim=c(10000,350000),
+     ylim=c(0,50000),
+     col="grey",
+     border="red", 
+     cex=1.2, cex.lab=1.2, cex.axis=1.2,
+     las=1, #rotate the value of y-axis
+     #las=2, #rotate the value of x-axis
+)
+
+
+#############Scatter Plot-the relationship between age and income############# 
+
+plot(df$Age,application$AMT_INCOME_TOTAL,
+     main="Scatter Plot of Income and Age",
+     ylab="Income",
+     xlab="Age",
+     col="blue",
+     pch=16, 
+     cex=1.2, cex.lab=1.2, cex.axis=1.2,
+)
+
+
+#Creating a Bar Chart-Income stream and stability
+par(mar=c(5,5,5,2)) #Increase the plot section margin size
+count<- table(application$NAME_INCOME_TYPE); count
+barplot(count, 
+        main="Income Type Distribution",
+        xlab="Income Type", 
+        ylab="Frequency", 
+        ylim=c(0,250000),
+        border="red", col="lightblue",
+)
+
+
+ggplot(application, aes(x = factor(NAME_INCOME_TYPE), y = AMT_INCOME_TOTAL)) + 
+  geom_bar(stat = "summary", fun = "mean", width=0.4)+
+  labs(x="Name of the income",y="Avg Income Salary")
+
+
+#####Side-by-Side Bar Chart-the relationship between gender and education######
+
+count<- table(application$CODE_GENDER,application$NAME_EDUCATION_TYPE); count
+barplot(count, 
+        main="Two-dimentional Bar Chart",
+        xlab="Education", 
+        ylab="Frequency", 
+        col=c("red", "blue"),
+        cex=1.2, cex.axis=1.2,cex.lab=1.2,
+        legend=rownames(count), beside=T)
+
+
+
+##########################more data visulization################################
+## converting characters to factors and converting age and years employed in terms of years
+data$age <- -data$DAYS_BIRTH/365
+data$employ <- -data$DAYS_EMPLOYED/365
+
+data$CODE_GENDER <- as.factor(data$CODE_GENDER)
+data$FLAG_OWN_CAR <- as.factor(data$FLAG_OWN_CAR)
+data$FLAG_OWN_REALTY <- as.factor(data$FLAG_OWN_REALTY)
+data$NAME_INCOME_TYPE <- as.factor(data$NAME_INCOME_TYPE)
+data$NAME_EDUCATION_TYPE <- as.factor(data$NAME_EDUCATION_TYPE)
+data$NAME_HOUSING_TYPE <- as.factor(data$NAME_EDUCATION_TYPE)
+data$NAME_FAMILY_STATUS <- as.factor(data$NAME_FAMILY_STATUS)
+data$OCCUPATION_TYPE <- as.factor(data$OCCUPATION_TYPE)
+str(data)
+
+
+table(data$CODE_GENDER)
+table(data$FLAG_OWN_CAR)
+table(data$FLAG_OWN_REALTY)
+table(data$NAME_INCOME_TYPE)
+table(data$NAME_EDUCATION_TYPE)
+table(data$NAME_FAMILY_STATUS)
+table(data$NAME_HOUSING_TYPE)
+table(data$FLAG_MOBIL)
+table(data$FLAG_WORK_PHONE)
+table(data$FLAG_PHONE)
+table(data$FLAG_EMAIL)
+table(data$OCCUPATION_TYPE)
+
+sapply(data,class)
+install.packages("lessR")
+library(lessR)
+
+## distribution of gender
+data%>%
+  group_by(CODE_GENDER) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+
+cat <- table(data$CODE_GENDER)
+cols <-  hcl.colors(length(levels(cat)), "Fall")
+pie(cat,
+    col = hcl.colors(length(cat), "BluYl"))
+title(main = "Gender distribution", sub = "Breakage of gender in our dataset",
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue" 
+)
+
+
+## distribution of owing real estate
+data %>%
+  group_by(data$FLAG_OWN_REALTY) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+realty <- table(data$FLAG_OWN_REALTY)
+pie(realty,
+    col = hcl.colors(length(realty), "BluYl"))
+title(main = "House ownership", sub = "Breakage of house ownership in our dataset",
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue"
+)
+
+
+library(ggplot2)
+library(dplyr)
+
+## income type
+data %>%
+  group_by(data$NAME_INCOME_TYPE) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+
+ggplot(data, aes(NAME_INCOME_TYPE)) +
+  geom_bar(fill = "#0073C2FF")+  xlab("Income type") + ylab("Frequency") 
+
+## education type
+data %>%
+  group_by(data$NAME_EDUCATION_TYPE) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+
+ggplot(data, aes(NAME_EDUCATION_TYPE)) +
+  geom_bar(fill = "#0073C2FF") +  xlab("Education type") + ylab("Frequency") 
+
+## family status
+
+data %>%
+  group_by(data$NAME_FAMILY_STATUS) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+
+ggplot(data, aes(NAME_FAMILY_STATUS)) +
+  geom_bar(fill = "#0073C2FF") 
+
+## housing type
+
+data %>%
+  group_by(data$NAME_HOUSING_TYPE) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+
+ggplot(data, aes(NAME_HOUSING_TYPE)) +
+  geom_bar(fill = "#0073C2FF") 
+
+## age
+
+data$age <- - (data$DAYS_BIRTH/365)
+age <- data.frame(data$age)
+
+hist(data$age, breaks = 100000, main ="Age distribution" , xlab = "Age")
+summary(data$age)
+
+## employment
+
+data$employ <- (-data$DAYS_EMPLOYED/365)
+employ <- data.frame(data$employ)
+View(employ)
+hist(data$employ, breaks = 1000, xlim = c(0,50), main ="Years employed distribution" , xlab = "Years")
+
+## own mobile
+
+mobile <- table(data$FLAG_MOBIL)
+mobile
+pie(mobile,
+    col = hcl.colors(length(mobile), "BluYl"))
+title(main = "Mobile ownership", sub = "Breakage of mobile ownership in our dataset",
+      
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue"
+)
+
+table(data$FLAG_MOBIL)
+
+## work phone
+data %>%
+  group_by(data$FLAG_WORK_PHONE) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+work <- table(data$FLAG_WORK_PHONE)
+pie(work,
+    col = hcl.colors(length(work), "BluYl"))
+title(main = "Work phone ownership", sub = "Breakage of work phone ownership in our dataset",
+      
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue"
+)
+
+## phone ownership
+data %>%
+  group_by(data$FLAG_PHONE) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+phone <- table(data$FLAG_PHONE)
+pie(phone,
+    col = hcl.colors(length(phone), "BluYl"))
+title(main = "General phone ownership", sub = "Breakage of phone ownership in our dataset",
+      xlab = "X axis", ylab = "Y axis",
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue"
+)
+
+## email 
+email <- table(data$FLAG_EMAIL)
+pie(email,
+    col = hcl.colors(length(email), "BluYl"))
+title(main = "Email availability", sub = "Breakage of email availability  in our dataset",
+      
+      cex.main = 2,   font.main= 4, col.main= "red",
+      cex.sub = 0.75, font.sub = 3, col.sub = "green",
+      col.lab ="darkblue"
+)
+
+## occupation type
+
+data %>%
+  group_by(data$OCCUPATION_TYPE) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+
+ggplot(data, aes(OCCUPATION_TYPE)) +
+  geom_bar(fill = "#0073C2FF") 
+
+## family members count
+
+data %>%
+  group_by(data$CNT_FAM_MEMBERS) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+
+ggplot(data, aes(CNT_FAM_MEMBERS)) +
+  geom_bar(fill = "#0073C2FF") 
+
+############################## set sample######################################
+m<-m2
+#use set.seed() to get the same partitions when re-running the R code.
+set.seed(1)
+## partitioning into training (60%) and validation (40%)
+# randomly sample 60% of the row IDs for training; the remaining 40% serve as
+# validation
+train.rows <- sample(rownames(m), dim(m)[1]*0.6)
+# collect all the columns with training row ID into training set:
+train.data <- m[train.rows, ]
+# assign row IDs that are not already in the training set, into validation
+valid.rows <- setdiff(rownames(m), train.rows)
+valid.data <- m[valid.rows, ]
+
+
+####another way
+## partitioning into training (50%), validation (30%), test (20%)
+# randomly sample 50% of the row IDs for training
+train.rows <- sample(rownames(m), dim(m)[1]*0.5)
+# sample 30% of the row IDs into the validation set, drawing only from records
+# not already in the training set
+# use setdiff() to find records not already in the training set
+valid.rows <- sample(setdiff(rownames(m), train.rows),
+                     dim(m)[1]*0.3)
+# assign the remaining 20% row IDs serve as test
+test.rows <- setdiff(rownames(m), union(train.rows, valid.rows))
+# create the 3 data frames by collecting all columns from the appropriate rows
+train.data <- m[train.rows, ]
+valid.data <- m[valid.rows, ]
+test.data <- m[test.rows, ]
+
+##########################correlation###########################################
+
+m3<-cbind(train.data$Status,train.data$rank,train.data$CNT_CHILDREN,
+          train.data$AMT_INCOME_TOTAL,train.data$FLAG_PHONE,
+          train.data$FLAG_WORK_PHONE, train.data$FLAG_EMAIL,train.data$CNT_FAM_MEMBERS
+          ,train.data$CODE_GENDERlabel ,train.data$FLAG_OWN_CARlabel
+          ,train.data$FLAG_OWN_REALTYlabel,train.data$YEARS_BIRTH,train.data$YEARS_EMPLOYED)
+
+colnames(m3) <- c('Status','rank','CNT_CHILDREN','AMT_INCOME_TOTAL','FLAG_PHONE','FLAG_WORK_PHONE',
+                  'FLAG_EMAIL','CNT_FAM_MEMBERS','CODE_GENDERlabel','FLAG_OWN_CARlabel'
+                  ,'FLAG_OWN_REALTYlabel','YEARS_BIRTH','YEARS_EMPLOYED')
+
+mymodel.cor =cor(m3)
+mymodel.cor 
+
+#Visualizing 
+install.packages("corrplot")
+library(corrplot)
+corrplot(mymodel.cor)
+
+
+######################line regression model#####################################
+#Fitting Regression Model
+full.model<- lm(Status~CNT_CHILDREN+AMT_INCOME_TOTAL+FLAG_PHONE+FLAG_WORK_PHONE
+                +FLAG_EMAIL+CNT_FAM_MEMBERS+ CODE_GENDERlabel+FLAG_OWN_CARlabel
+                +FLAG_OWN_REALTYlabel+YEARS_BIRTH+YEARS_EMPLOYED
+                , data=train.data); summary(full.model)
+
+# Forward
+forward<- step(full.model,direction="forward")
+reg1<-forward
+
+# Backward
+backward<- step(full.model,direction="backward")
+reg2<-backward
+
+#Step-wise
+stepwise<- step(full.model,direction="both")
+reg3<-stepwise
+
+#final model
+final.model<- lm( Status~CNT_CHILDREN+AMT_INCOME_TOTAL+CNT_FAM_MEMBERS+ CODE_GENDERlabel + FLAG_OWN_CARlabel + FLAG_OWN_REALTYlabel + 
+                    YEARS_BIRTH + YEARS_EMPLOYED, data=train.data); summary(final.model)
+
+#Make the Predictions for the Validation Data and Compare RMSE, MAPE, and mean error,lift charts 
+library(forecast)
+
+
+##########################performance evaluation###############################
+
+######(1)for reg1##########################
+
+# use predict() to make predictions on a new set.
+lm.pred1 <- predict(reg1, valid.data)
+some.residuals <- valid.data$Status[1:20] - lm.pred1[1:20]
+df1<-data.frame("Predicted" = lm.pred1[1:20], "Actual" = valid.data$Status[1:20],
+                "Residual" = some.residuals)
+
+# use accuracy() to compute common accuracy measures:RMSE, MAPE, and mean error#
+accuracy(lm.pred1, valid.data$Status)
+
+
+######(2)for reg2##########################
+lm.pred2 <- predict(reg2, valid.data)
+some.residuals <- valid.data$Status[1:20] - lm.pred2[1:20]
+df2<-data.frame("Predicted" = lm.pred2[1:20], "Actual" = valid.data$Status[1:20],
+                "Residual" = some.residuals)
+
+# use accuracy() to compute common accuracy measures:RMSE, MAPE, and mean error#
+accuracy(lm.pred2, valid.data$Status)
+
+
+######(3)for reg3##########################
+lm.pred3 <- predict(reg3, valid.data)
+some.residuals <- valid.data$Status[1:20] - lm.pred3[1:20]
+df3<-data.frame("Predicted" = lm.pred3[1:20], "Actual" = valid.data$Status[1:20],
+                "Residual" = some.residuals)
+
+# use accuracy() to compute common accuracy measures:RMSE, MAPE, and mean error#
+accuracy(lm.pred3, valid.data$Status)
+
+
+###########################log transformation###################################
+LStatus=log(train.data$Status)
+
+m4<-cbind(LStatus,train.data$rank,train.data$CNT_CHILDREN,train.data$AMT_INCOME_TOTAL,
+          train.data$FLAG_PHONE,train.data$FLAG_WORK_PHONE,
+          train.data$FLAG_EMAIL,train.data$CNT_FAM_MEMBERS,
+          train.data$CODE_GENDERlabel,train.data$FLAG_OWN_CARlabel
+          ,train.data$FLAG_OWN_REALTYlabel,train.data$YEARS_BIRTH,train.data$YEARS_EMPLOYED)
+
+colnames(m4) <- c('LStatus','rank','CNT_CHILDREN','AMT_INCOME_TOTAL','FLAG_PHONE','FLAG_WORK_PHONE',
+                  'FLAG_EMAIL','CNT_FAM_MEMBERS','CODE_GENDERlabel','FLAG_OWN_CARlabel'
+                  ,'FLAG_OWN_REALTYlabel','YEARS_BIRTH','YEARS_EMPLOYED')
+
+mymodel2.cor =cor(m4)
+mymodel2.cor 
+corrplot(mymodel2.cor)
+
+#Fitting Regression Model
+Log.model<- lm(LStatus~CNT_CHILDREN+AMT_INCOME_TOTAL+FLAG_PHONE+FLAG_WORK_PHONE
+               +FLAG_EMAIL+CNT_FAM_MEMBERS+ CODE_GENDERlabel+FLAG_OWN_CARlabel
+               +FLAG_OWN_REALTYlabel+YEARS_BIRTH+YEARS_EMPLOYED
+               , data=train.data); summary(full.model)
+
+reg4<-Log.model
+######(1)for reg3##########################
+lm.pred4 <- predict(reg4, valid.data)
+some.residuals <- valid.data$Status[1:20] - lm.pred3[1:20]
+df1<-data.frame("Predicted" = lm.pred3[1:20], "Actual" = valid.data$Status[1:20],
+                "Residual" = some.residuals)
+
+# use accuracy() to compute common accuracy measures:RMSE, MAPE, and mean error#
+accuracy(lm.pred4, valid.data$Status)
+
+###############################Classification Model#############################
+
+## for classification model - to classify clients as good or bad clients
+table(data$rank)
+data$CLIENT_TYPE <- ifelse((data$rank == '1'), "good client","bad client") 
+View(data.df)
+table(data$CLIENT_TYPE)
+
+
+
+## Two-dimensional bar graphs
+data %>%
+  group_by(data$CLIENT_TYPE) %>%
+  summarise(n = n()) %>%
+  mutate(Freq = n/sum(n))
+
+
+par(mar=c(5,5,5,2))
+count<- table(data$CLIENT_TYPE,data$OCCUPATION_TYPE); count
+barplot(count, 
+        main="Two-dimentional Bar Chart",
+        xlab="Occupation type", 
+        ylab="Frequency", 
+        col=c("red", "blue"),
+        cex=1.2, cex.axis=1.2,cex.lab=1.2,
+        legend=rownames(count), beside=T)
+
+count1 <- table(data$CLIENT_TYPE, data$NAME_INCOME_TYPE); count1
+barplot(count1, 
+        main="Two-dimentional Bar Chart for client distribution among different income types",
+        xlab="Income type", 
+        ylab="Frequency", 
+        col=c("red", "blue"),
+        cex=1.2, cex.axis=1.2,cex.lab=1.2,
+        legend=rownames(count1), beside=T)
+
+count2 <- table(data$CLIENT_TYPE, data$NAME_EDUCATION_TYPE); count2
+barplot(count2, 
+        main="Two-dimentional Bar Chart for client type distribution among different education levels",
+        xlab="Education type", 
+        ylab="Frequency", 
+        col=c("red", "blue"),
+        cex=1.2, cex.axis=1.2,cex.lab=1.2,
+        legend=rownames(count2), beside=T)
+
+count3 <- table(data$CLIENT_TYPE, data$NAME_FAMILY_STATUS); count3
+barplot(count3, 
+        main="Two-dimentional Bar Chart for client type distribution among different family conditions",
+        xlab="Family type", 
+        ylab="Frequency", 
+        col=c("red", "blue"),
+        cex=1.2, cex.axis=1.2,cex.lab=1.2,
+        legend=rownames(count3), beside=T)
+
+count4 <- table(data$CLIENT_TYPE, data$CNT_FAM_MEMBERS); count4
+barplot(count4, 
+        main="Distribution of client type based on number of family members",
+        xlab="Number of family members", 
+        ylab="Frequency", 
+        col=c("red", "blue"),
+        cex=1.2, cex.axis=1.2,cex.lab=1.2,
+        legend=rownames(count4), beside=T)
+
+count5 <- table(data$CLIENT_TYPE, data$CODE_GENDER); count5
+barplot(count5, 
+        main="Distrubution of client type based on gender",
+        xlab="Gender", 
+        ylab="Frequency", 
+        col=c("red", "blue"),
+        cex=1.2, cex.axis=1.2,cex.lab=1.2,
+        legend=rownames(count5), beside=T)
+plot(data$age,data$AMT_INCOME_TOTAL,
+     main="Scatter Plot of Income and Age",
+     ylab="Income",
+     xlab="Age",
+     col="blue",
+     pch=16, 
+     cex=1.2, cex.lab=1.2, cex.axis=1.2,
+)
+
+data.df <- data
+data.df$CLIENT_TYPE <- as.factor(data.df$CLIENT_TYPE)
+
+clean_data.df <- data.df %>%
+  select(-c( Status, rank, age, employ))
+
+set.seed(1234)
+train.rows <- sample(rownames(clean_data.df), dim(clean_data.df)[1]*0.6)
+valid.rows <- setdiff(rownames(clean_data.df), train.rows)
+train.data <- clean_data.df[train.rows, ]
+valid.data <- clean_data.df[valid.rows,]
+
+install.packages("rattle")
+install.packages("bitops")
+library(rpart)
+library(rpart.plot)
+library(rattle)
+
+fit1 <- rpart(CLIENT_TYPE ~ ., data=train.data, method = 'class', control=rpart.control(minsplit=2, minbucket=1, cp=0.001))
+rpart.plot(fit1)
+rpart.rules(fit1)
+
+printcp(fit1)
+plotcp(fit1)
+
+pred <- predict(fit1, valid.data, type = 'class')
+table_pred <- table(valid.data$CLIENT_TYPE, pred)
+table_pred
+accuracy_Test <- sum(diag(table_pred)) / sum(table_pred)
+accuracy_Test*100

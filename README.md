@@ -1,4 +1,4 @@
-# jwProjects-ACADEMIC PROJECT EXPERIENCE
+# jwProjects-MAIN ACADEMIC PROJECT EXPERIENCE
 Analysis of Factors Affecting Crime in Texas -Time Series Analysis with STATA,UT Dallas Dec. 2022
 ●Using STATA,created Instrumental variables, and conducted 2SLS regression,,explored SLR , MLR, AR(1) model,FDL model, static model,, log model, Models with Quadratics and Interaction ,trend, two-Period Panel Data Analysis,Fixed Effects Model; 
 ●Analyzed the Texas crime rate with the most recent data describing the contributing factors and found that crime rate in the last year

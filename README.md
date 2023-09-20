@@ -1,4 +1,4 @@
-# JWProjects-MAIN ACADEMIC PROJECT EXPERIENCE
+# Projects-MAIN ACADEMIC PROJECT EXPERIENCE
 
 Credit Card Transactions Fraud Detection-Applied Machine Learning Analysis with Python,UT Dallas May. 2023
 
